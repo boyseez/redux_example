@@ -1,86 +1,92 @@
-import { createStore } from "https://unpkg.com/redux@4.0.5/es/redux.mjs";
+import {
+  createStore,
+  applyMiddleware,
+  compose,
+} from "https://unpkg.com/redux@4.0.5/es/redux.mjs";
 
-const ATTIVAZIONE_REDUX_DEV_TOOL =
-  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__();
+// Constants
+const FORM_SENT = "FORM_SENT";
+const BAD_WORD = "BAD_WORD";
 
-//NAME COSTANTS------------------------
-const BUTTON_CLICKED = "BUTTON_CLICKED";
-const MODAL_CLOSED = "MODAL_CLOSED";
-//------------------------------------
-
-//ACTION CREATORS---------------
-function buttonCLicked(payload) {
+// Actions
+function formSent(payload) {
   return {
-    type: BUTTON_CLICKED,
+    type: FORM_SENT,
     payload,
   };
 }
 
-function modalClosed() {
+function badWord() {
   return {
-    type: MODAL_CLOSED,
+    type: BAD_WORD,
   };
 }
-//-----------------------------------
 
-//Stato iniziale
 const initialState = {
-  buttonCLicked: `no`,
-  modalClosed: `no`,
+  formSent: "no",
+  badWord: "no",
 };
 
-//rootReducer
 function rootReducer(state = initialState, action) {
-  //Se non ci sono modifiche allo stato ritornale lo stato iniziale all'esterno
   switch (action.type) {
-    case BUTTON_CLICKED: {
-      //cambia stato
-      // NON CORRETTO!! FIXME!!
-      //cosi rompe límmutabilita di redux e non funziona il timeTravel( macchina del tempo)
-      //state.buttonCLicked = "yes"; soluzione Object.assign
-
-      return Object.assign({}, initialState, { buttonCLicked: `yes` });
+    case FORM_SENT: {
+      return { ...state, formSent: "yes" };
     }
-    case MODAL_CLOSED: {
-      //cambia stato
-      //state.modalClosed = "yes";
-      //oppure con lo spred
-      return { ...initialState, modalClosed: `yes` };
+    case BAD_WORD: {
+      return { ...state, badWord: "yes" };
     }
     default:
       return state;
   }
 }
 
-//store
-const store = createStore(rootReducer, ATTIVAZIONE_REDUX_DEV_TOOL);
+function noN_WordMiddleware({ getState, dispatch }) {
+  return function (next) {
+    return function (action) {
+      if (action.type === FORM_SENT) {
+        if (action.payload.includes("n")) {
+          dispatch(badWord());
+        }
+      }
+      return next(action);
+    };
+  };
+}
 
-//UI
-const button = document.getElementsByTagName("button")[0];
-button.addEventListener("click", function (event) {
-  //manda messaggio sullo store
-  store.dispatch(buttonCLicked(event)); //payload dati attaccati
+function loggerMiddleWEARE() {
+  return function (next) {
+    return function (action) {
+      console.log("Mid Log:", action);
+      return next(action);
+    };
+  };
+}
+
+// Store setup with middleware and DevTools
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
+const store = createStore(
+  rootReducer,
+  composeEnhancers(applyMiddleware(noN_WordMiddleware, loggerMiddleWEARE))
+);
+
+// Form handling
+const form = document.forms[0];
+form.addEventListener("submit", function (event) {
+  event.preventDefault();
+  const data = new FormData(this);
+  const payload = data.get("word");
+  store.dispatch(formSent(payload));
 });
 
-const buttonModal = document.getElementById("button_modal");
-buttonModal.addEventListener("click", function () {
-  store.dispatch(modalClosed());
-});
+// Subscribe to store changes - FIXED VERSION
+let previousBadWordState = store.getState().badWord;
 
-//notifica quando c'e'cambio di stato
 store.subscribe(function () {
-  //viene lanciato ogni volta che c'e' un cambio di stato
-  //quindi conviene controllare le azioni dello state
-
-  if (store.getState().buttonCLicked === "yes") {
-    const messaggio = document.getElementById("mex");
-    messaggio.style.display = "block";
+  const currentState = store.getState();
+  if (currentState.badWord === "yes" && previousBadWordState === "no") {
+    const h3 = document.createElement("h3");
+    h3.innerText = "La tua parola ha la lettere N!";
+    document.body.appendChild(h3);
   }
-});
-
-store.subscribe(function () {
-  if (store.getState().modalClosed === "yes") {
-    const messaggio = document.getElementById("mex");
-    messaggio.style.display = "none";
-  }
+  previousBadWordState = currentState.badWord;
 });
