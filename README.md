@@ -18,5 +18,10 @@ Esempio di Redux in Vanilla JS e in React
 
 Quando l' intefaccia vuole cambiare lo stato dell' apllicazione(esempio click su un bottone fare qualcosa), fa una **action dispatch**  (anche questa action e' un oggetto js)
 
-quando lo store riceve  l'azione  dall'UI la passa al reducer che decide come modificare lo stato (NON VIENE MODIFICATO ma creata una copia di questo stato, e ritornata la copia con le opportune modifiche) 
-Ogni interfaccia puo'abbonarsi alle modifiche di stato e quando c'e'una modifica lo store invia una **NOTIFIES** , quindi l'interfaccia riceve delle notifiche con la bunzione **subscrive dello store** 
+quando lo store riceve  l'azione  dall'UI la passa al reducer che decide come modificare lo stato (NON VIENE MODIFICATO ma creata una copia di questo stato, e ritornata la copia con le opportune modifiche)
+Ogni interfaccia puo'abbonarsi alle modifiche di stato e quando c'e'una modifica lo store invia una **NOTIFIES** , quindi l'interfaccia riceve delle notifiche con la bunzione **subscrive dello store**
+
+**MIDDLEWARE (plugin che va ad innsestarsi nel flusso dell'applicazione e va a modificare l'applicazione stessa)**: con redux il middle wear va  icluso nello store e si mette in mezzo tra ACTION DISPATCH e il reducer, quindi intercetta le actions o le passa senza modifiche oppure le modifica facendo a sua volta delle action dispatch (sono importanti perche qui vengono fatte operazioni asincrone come chiamte API o timeout)
+
+
+![img](./redux_schema_middleweare.png)
