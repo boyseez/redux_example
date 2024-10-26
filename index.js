@@ -1,5 +1,8 @@
 import { createStore } from "https://unpkg.com/redux@4.0.5/es/redux.mjs";
 
+const ATTIVAZIONE_REDUX_DEV_TOOL =
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__();
+
 //NAME COSTANTS------------------------
 const BUTTON_CLICKED = "BUTTON_CLICKED";
 const MODAL_CLOSED = "MODAL_CLOSED";
@@ -41,8 +44,8 @@ function rootReducer(state = initialState, action) {
     case MODAL_CLOSED: {
       //cambia stato
       //state.modalClosed = "yes";
-
-      return Object.assign({}, initialState, { modalClosed: `yes` });
+      //oppure con lo spred
+      return { ...initialState, modalClosed: `yes` };
     }
     default:
       return state;
@@ -50,7 +53,7 @@ function rootReducer(state = initialState, action) {
 }
 
 //store
-const store = createStore(rootReducer);
+const store = createStore(rootReducer, ATTIVAZIONE_REDUX_DEV_TOOL);
 
 //UI
 const button = document.getElementsByTagName("button")[0];
