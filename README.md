@@ -25,3 +25,7 @@ Ogni interfaccia puo'abbonarsi alle modifiche di stato e quando c'e'una modifica
 
 
 ![img](./redux_schema_middleweare.png)
+
+
+# REDUX THUNK
+middleweare custom che applicato allo store permette di ritornare non solo oggetti ma anche funzioini
