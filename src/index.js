@@ -1,114 +1,70 @@
-import { createStore, combineReducers, applyMiddleware, compose } from "redux";
 import { getApi } from "./getAPi";
-//import { thunk } from "redux-thunk"; // Importa redux-thunk
-
-//ACTION CREATE: funzioni pure che devono ritornare oggetti
-//REDUCER: funzioni che dovrebbero ritornare lo stato
-
-const FETCH_ARTICLES = "FETCH_ARTICLES";
-const FETCH_START = "FETCH_START";
-const FETCH_SUCCESS = "FETCH_SUCCESS";
-
-const HAS_FETCHED = "HAS_FETCHED";
-const IS_FETCHING = "IS_FETCHING";
-const ERROR_FETCHING = "ERROR_FETCHING";
+import { configureStore, createSlice } from "@reduxjs/toolkit";
 
 const articleState = {
-  isFetching: "",
-  error: "",
+  isFetching: false,
+  error: null,
   data: [],
 };
 
-function articleReducer(state = articleState, action) {
-  switch (action.type) {
-    case IS_FETCHING:
-      return {
-        ...state,
-        isFetching: "YES",
-      };
-    case HAS_FETCHED:
-      return {
-        ...state,
-        isFetching: "NO",
-        data: state.data.concat(action.payload),
-      };
-    case ERROR_FETCHING:
-      return {
-        ...state,
-        isFetching: "NO",
-        error: action.payload,
-      };
-    default:
-      return state;
-  }
-}
-
-const rootReducer = combineReducers({
-  articles: articleReducer,
+const articlesSlice = createSlice({
+  name: "article",
+  initialState: articleState,
+  reducers: {
+    fetchStart: (state) => {
+      state.isFetching = true;
+      state.error = null;
+    },
+    fetchSuccess: (state, action) => {
+      state.isFetching = false;
+      state.data = action.payload;
+    },
+    fetchError: (state, action) => {
+      state.isFetching = false;
+      state.error = action.payload;
+    },
+  },
 });
+
+const { fetchStart, fetchSuccess, fetchError } = articlesSlice.actions;
+const linkReducer = articlesSlice.reducer;
 
 function apiMiddleware({ dispatch }) {
-  return function (next) {
-    return function (action) {
-      switch (action.type) {
-        case FETCH_START:
-          getApi().then((json) => dispatch(fetchSeccess(json)));
-        //chiama api
-        //se va a buon fine si fa il dispatch di una;tra azione ad esempio FETCH SUCCESS
-      }
-      return next(action);
-    };
+  return (next) => (action) => {
+    if (action.type === fetchStart.toString()) {
+      getApi()
+        .then((json) => dispatch(fetchSuccess(json)))
+        .catch((error) => dispatch(fetchError(error.toString())));
+    }
+    return next(action);
   };
 }
 
-function fetchSeccess(payload) {
-  return { type: FETCH_SUCCESS, payload };
-}
-
-// Funzione per fetchare gli articoli
-function fetchArticles() {
-  return { type: FETCH_START };
-
-  /*return function (dispatch) {
-    dispatch({ type: IS_FETCHING });
-    return fetch("https://jsonplaceholder.typicode.com/todos/1")
-      .then((response) => {
-        if (!response.ok) {
-          throw Error(response.status);
-        }
-        return response.json();
-      })
-      .then((json) => dispatch({ type: HAS_FETCHED, payload: json }))
-      .catch((error) =>
-        dispatch({ type: ERROR_FETCHING, payload: error.message })
-      );
-  };*/
-}
 function loggerMiddleware(store) {
-  return function (next) {
-    return function (action) {
-      console.log(action);
-      return next(action);
-    };
+  return (next) => (action) => {
+    console.log("Dispatching action:", action);
+    return next(action);
   };
 }
 
-// Configurazione di composeEnhancers
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
-
-// Assicurati che middleWware sia un array di funzioni
 const middleWware = [apiMiddleware, loggerMiddleware];
-const store = createStore(
-  rootReducer,
-  composeEnhancers(applyMiddleware(...middleWware))
-);
 
-// Aggiungi l'event listener per il bottone
-const clickedButton = document.getElementById("fetc-btn");
-clickedButton.addEventListener("click", function () {
-  store.dispatch(fetchArticles());
+const store = configureStore({
+  reducer: {
+    links: linkReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(middleWware),
 });
 
-store.subscribe(function () {
-  console.log("Stato", store.getState());
+// Add event listener for the button
+const clickedButton = document.getElementById("fetc-btn");
+if (clickedButton) {
+  clickedButton.addEventListener("click", () => {
+    store.dispatch(fetchStart());
+  });
+}
+
+store.subscribe(() => {
+  console.log("State updated:", store.getState());
 });
