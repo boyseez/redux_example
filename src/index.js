@@ -1,10 +1,14 @@
 import { createStore, combineReducers, applyMiddleware, compose } from "redux";
-import { thunk } from "redux-thunk"; // Importa redux-thunk
+import { getApi } from "./getAPi";
+//import { thunk } from "redux-thunk"; // Importa redux-thunk
 
 //ACTION CREATE: funzioni pure che devono ritornare oggetti
 //REDUCER: funzioni che dovrebbero ritornare lo stato
 
 const FETCH_ARTICLES = "FETCH_ARTICLES";
+const FETCH_START = "FETCH_START";
+const FETCH_SUCCESS = "FETCH_SUCCESS";
+
 const HAS_FETCHED = "HAS_FETCHED";
 const IS_FETCHING = "IS_FETCHING";
 const ERROR_FETCHING = "ERROR_FETCHING";
@@ -43,18 +47,29 @@ const rootReducer = combineReducers({
   articles: articleReducer,
 });
 
-function loggerMiddleware(store) {
+function apiMiddleware({ dispatch }) {
   return function (next) {
     return function (action) {
-      console.log(action);
+      switch (action.type) {
+        case FETCH_START:
+          getApi().then((json) => dispatch(fetchSeccess(json)));
+        //chiama api
+        //se va a buon fine si fa il dispatch di una;tra azione ad esempio FETCH SUCCESS
+      }
       return next(action);
     };
   };
 }
 
+function fetchSeccess(payload) {
+  return { type: FETCH_SUCCESS, payload };
+}
+
 // Funzione per fetchare gli articoli
 function fetchArticles() {
-  return function (dispatch) {
+  return { type: FETCH_START };
+
+  /*return function (dispatch) {
     dispatch({ type: IS_FETCHING });
     return fetch("https://jsonplaceholder.typicode.com/todos/1")
       .then((response) => {
@@ -67,6 +82,14 @@ function fetchArticles() {
       .catch((error) =>
         dispatch({ type: ERROR_FETCHING, payload: error.message })
       );
+  };*/
+}
+function loggerMiddleware(store) {
+  return function (next) {
+    return function (action) {
+      console.log(action);
+      return next(action);
+    };
   };
 }
 
@@ -74,7 +97,7 @@ function fetchArticles() {
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 
 // Assicurati che middleWware sia un array di funzioni
-const middleWware = [thunk, loggerMiddleware];
+const middleWware = [apiMiddleware, loggerMiddleware];
 const store = createStore(
   rootReducer,
   composeEnhancers(applyMiddleware(...middleWware))
