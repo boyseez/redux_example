@@ -1,6 +1,9 @@
 import { createStore, combineReducers, applyMiddleware, compose } from "redux";
 import { thunk } from "redux-thunk"; // Importa redux-thunk
 
+//ACTION CREATE: funzioni pure che devono ritornare oggetti
+//REDUCER: funzioni che dovrebbero ritornare lo stato
+
 const FETCH_ARTICLES = "FETCH_ARTICLES";
 const HAS_FETCHED = "HAS_FETCHED";
 const IS_FETCHING = "IS_FETCHING";
